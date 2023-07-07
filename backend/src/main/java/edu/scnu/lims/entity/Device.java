@@ -19,6 +19,7 @@ public class Device {
     private Integer deviceId;
     private String imageUrl;
     private String name;
+
     @Enumerated(EnumType.STRING)
     private DeviceStatusEnum status;
 

@@ -75,7 +75,7 @@ public class EmailController {
             //发送邮件
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(receiver);//收信人
-            message.setSubject("实验室设备管理平台 - 验证码");//主题
+            message.setSubject("郑州大学实验室设备管理平台 - 验证码");//主题
             message.setText("这是你的验证码:" + verifyCode + ",5分钟内有效");//内容
             message.setFrom(from);//发信人
             mailSender.send(message);

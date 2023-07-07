@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @author ZhuangJieYing
+
  */
 @Slf4j
 @Api(tags = "设备申请")
@@ -70,8 +70,12 @@ public class ApplyController {
                 deviceApply.setBorrowReason(deviceApplyVO.borrowReason);
                 deviceApply.setPromiseTimestamp(deviceApplyVO.promiseTimestamp);
 
+
                 return CommonResult.success(deviceApplyService.saveDeviceApply(deviceApply, device));
             }
+
+
+
         }
         return CommonResult.failed("失效");
     }

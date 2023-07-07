@@ -4,9 +4,9 @@ import edu.scnu.lims.constant.DeviceApplyStatusEnum;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 /**
- * @author ZhuangJieYing
  */
 @Data
 @Entity
@@ -21,6 +21,9 @@ public class DeviceApply {
     private Long grantTimestamp;
     private Long returnTimestamp;
     private Long finishTimestamp;
+    private BigDecimal cost;
+
+    private String plant;
     @Enumerated(EnumType.STRING)
     private DeviceApplyStatusEnum status;
 

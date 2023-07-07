@@ -34,7 +34,7 @@ public class UploadController {
         log.info("文件大小:" + file.getBytes().length);
 
         String fileName = System.currentTimeMillis() + "image.jpg";
-        String filePath = System.getProperty("user.home") + "/lims/images/" + fileName;
+        String filePath = System.getProperty("user.home") + "/lims/images/" + fileName; //上传图片路径保存在本地用户路径中
         File newFile = new File(filePath);
         file.transferTo(newFile);
 

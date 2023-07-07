@@ -28,8 +28,8 @@ public class SwaggerConfig {
     private String pathMapping;
 
     private ApiInfo initApiInfo() {
-        Contact contact = new Contact("庄杰颖", "https://github.com/jayying007", "zjy_mc@163.com");
-        return new ApiInfo("实验室信息管理平台接口",
+        Contact contact = new Contact("DD", "https://github.com/Dddwaiting/LSP", "iedingyi@gmail.com");
+        return new ApiInfo("实验室设备管理平台接口",
                 initContextInfo(),
                 "1.0.0",
                 "服务条款",
