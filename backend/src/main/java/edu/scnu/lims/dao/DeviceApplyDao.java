@@ -1,10 +1,14 @@
 package edu.scnu.lims.dao;
 
+import edu.scnu.lims.constant.DeviceApplyStatusEnum;
+import edu.scnu.lims.constant.DeviceStatusEnum;
 import edu.scnu.lims.entity.DeviceApply;
 import edu.scnu.lims.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -29,4 +33,10 @@ public interface DeviceApplyDao extends JpaRepository<DeviceApply, Integer> {
      * @return
      */
     Long countByUser_UserIdOrDevice_Laboratory_LaboratoryId(Integer userId, Integer laboratoryId);
+
+
+
+
+
+
 }

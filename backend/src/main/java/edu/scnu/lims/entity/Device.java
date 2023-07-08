@@ -4,6 +4,7 @@ import edu.scnu.lims.constant.DeviceStatusEnum;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -20,6 +21,9 @@ public class Device {
     private String imageUrl;
     private String name;
 
+    private BigDecimal price;
+
+    private String maker;
     @Enumerated(EnumType.STRING)
     private DeviceStatusEnum status;
 
@@ -37,4 +41,8 @@ public class Device {
     @ManyToOne
     @JoinColumn(name = "laboratory_id")
     private Laboratory laboratory;
+
+    public Integer getId() {
+        return deviceId;
+    }
 }

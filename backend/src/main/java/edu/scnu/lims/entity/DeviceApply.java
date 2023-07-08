@@ -21,11 +21,16 @@ public class DeviceApply {
     private Long grantTimestamp;
     private Long returnTimestamp;
     private Long finishTimestamp;
+
     private BigDecimal cost;
 
     private String plant;
+
+
     @Enumerated(EnumType.STRING)
     private DeviceApplyStatusEnum status;
+
+
 
     @ManyToOne
     @JoinColumn(name = "device_id")
@@ -34,4 +39,8 @@ public class DeviceApply {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    public Device getDevice() {
+        return device;
+    }
 }

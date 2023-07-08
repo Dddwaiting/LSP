@@ -7,13 +7,13 @@ import edu.scnu.lims.dao.DeviceApplyDao;
 import edu.scnu.lims.entity.Device;
 import edu.scnu.lims.entity.DeviceApply;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.persistence.criteria.Join;
 import java.util.List;
 
 /**
@@ -56,7 +56,20 @@ public class DeviceApplyService {
         return deviceApplyDao.findAll(example, PageRequest.of(page, pageSize)).toList();
     }
 
-    public Long countDeviceApplies(DeviceApply deviceApply) {
+    public List<DeviceApply> getDeviceRepairs(int page, int pageSize, DeviceApply deviceApply) {
+        ExampleMatcher matcher = ExampleMatcher.matching()
+                .withMatcher("device.name", ExampleMatcher.GenericPropertyMatchers.contains());
+        Example<DeviceApply> example = Example.of(deviceApply, matcher);
+
+        return deviceApplyDao.findAll(example, PageRequest.of(page, pageSize)).toList();
+    }
+
+
+
+
+
+
+                    public Long countDeviceApplies(DeviceApply deviceApply) {
         ExampleMatcher matcher = ExampleMatcher.matching()
                 .withMatcher("device.name", ExampleMatcher.GenericPropertyMatchers.contains());
         Example<DeviceApply> example = Example.of(deviceApply, matcher);

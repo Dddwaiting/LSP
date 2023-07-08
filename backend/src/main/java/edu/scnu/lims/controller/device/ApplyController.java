@@ -19,13 +19,17 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
 
@@ -69,7 +73,8 @@ public class ApplyController {
                 deviceApply.setStatus(DeviceApplyStatusEnum.APPLIED);
                 deviceApply.setBorrowReason(deviceApplyVO.borrowReason);
                 deviceApply.setPromiseTimestamp(deviceApplyVO.promiseTimestamp);
-
+                deviceApply.setCost(deviceApplyVO.cost);
+                deviceApply.setPlant(deviceApplyVO.plant);
 
                 return CommonResult.success(deviceApplyService.saveDeviceApply(deviceApply, device));
             }
@@ -108,11 +113,54 @@ public class ApplyController {
         deviceApply.setDevice(device);
         deviceApply.setStatus(status);
 
+        // 超级管理员可以查看全部
+        if (UserRoleEnum.SUPER_ADMIN == user.getRole()) {
+            List<DeviceApply> deviceApplies = deviceApplyService.getDeviceApplies(page, pageSize, deviceApply);
+            // 根据 Device.id 查询设备信息并排除 status 为 'REPAIRING' 的数据
+            List<DeviceApply> filteredDeviceApplies = deviceApplies.stream()
+                    .filter(da -> !isDeviceApplying(da.getDevice().getId()))
+                    .collect(Collectors.toList());
+            return CommonResult.success(filteredDeviceApplies);
+        } else {
+            List<DeviceApply> userDeviceApplies = deviceApplyMapper.findDeviceApply(user);
+            // 根据 Device.id 查询设备信息并排除 status 为 'REPAIRING' 的数据
+            List<DeviceApply> filteredUserDeviceApplies = userDeviceApplies.stream()
+                    .filter(da -> !isDeviceApplying(da.getDevice().getId()))
+                    .collect(Collectors.toList());
+            return CommonResult.success(filteredUserDeviceApplies);
+        }
+    }
+
+    private boolean isDeviceApplying(Integer deviceId) {
+        // 根据Device.id查询device表中的status是否为'REPAIRING'
+        // 假设你有一个名为deviceService的设备服务类来查询设备信息
+        Device device = deviceService.getDeviceById(deviceId);
+        return device != null && DeviceStatusEnum.REPAIRING.equals(device.getStatus());
+    }
+
+   /*  public CommonResult<List<DeviceApply>> getApplyList(@RequestHeader(value = "Authentication-Token") String token,
+                                                        @RequestParam Integer page, @RequestParam Integer pageSize,
+                                                        @RequestParam(required = false) String name,
+                                                        @RequestParam(required = false) DeviceApplyStatusEnum status) {
+        String userSerialize = (String)redisTemplate.opsForValue().get(token);
+        User user = GsonUtils.fromJson(userSerialize, User.class);
+        if(user == null) {
+            return CommonResult.expire();
+        }
+
+        DeviceApply deviceApply = new DeviceApply();
+        Device device = new Device();
+        device.setName(name);
+        deviceApply.setDevice(device);
+        deviceApply.setStatus(status);
+
         //超级管理员可以查看全部
         if(UserRoleEnum.SUPER_ADMIN == user.getRole()) {
             return CommonResult.success(deviceApplyService.getDeviceApplies(page, pageSize, deviceApply));
         } else {
             return CommonResult.success(deviceApplyMapper.findDeviceApply(user));
+
+    */
             /*
             Laboratory laboratory = new Laboratory();
             laboratory.setUser(user);
@@ -127,8 +175,101 @@ public class ApplyController {
                 return CommonResult.success(deviceApplyService.getDeviceApplies(page, pageSize, deviceApply));
             }
             */
+
+
+
+
+
+    @LoginRequired
+    @ApiOperation(value = "查询维修设备申请表")
+    @GetMapping("repair")
+    public CommonResult<List<DeviceApply>> getRepairList(@RequestHeader(value = "Authentication-Token") String token,
+                                                         @RequestParam Integer page, @RequestParam Integer pageSize,
+                                                         @RequestParam(required = false) String name,
+                                                         @RequestParam(required = false) DeviceApplyStatusEnum status) {
+        String userSerialize = (String) redisTemplate.opsForValue().get(token);
+        User user = GsonUtils.fromJson(userSerialize, User.class);
+        if (user == null) {
+            return CommonResult.expire();
+        }
+
+        DeviceApply deviceApply = new DeviceApply();
+        Device device = new Device();
+        device.setName(name);
+        deviceApply.setDevice(device);
+        deviceApply.setStatus(status);
+
+        // 超级管理员可以查看全部
+        if (UserRoleEnum.SUPER_ADMIN == user.getRole()) {
+            List<DeviceApply> deviceRepairs = deviceApplyService.getDeviceRepairs(page, pageSize, deviceApply);
+            // 根据Device.id查询status为'REPAIRING'的数据
+            List<DeviceApply> filteredDeviceRepairs = deviceRepairs.stream()
+                    .filter(da -> isDeviceRepairing(da.getDevice().getId()))
+                    .collect(Collectors.toList());
+            return CommonResult.success(filteredDeviceRepairs);
+        } else {
+            List<DeviceApply> userDeviceApplies = deviceApplyMapper.findDeviceApply(user);
+            // 根据Device.id查询status为'REPAIRING'的数据
+            List<DeviceApply> filteredUserDeviceApplies = userDeviceApplies.stream()
+                    .filter(da -> isDeviceRepairing(da.getDevice().getId()))
+                    .collect(Collectors.toList());
+            return CommonResult.success(filteredUserDeviceApplies);
         }
     }
+
+    private boolean isDeviceRepairing(Integer deviceId) {
+        // 根据Device.id查询device表中的status是否为'REPAIRING'
+        // 假设你有一个名为deviceService的设备服务类来查询设备信息
+        Device device = deviceService.getDeviceById(deviceId);
+        return device != null && DeviceStatusEnum.REPAIRING.equals(device.getStatus());
+    }
+
+
+    @LoginRequired
+    @ApiOperation(value = "购买设备申请表")
+    @GetMapping("purchase")
+    public CommonResult<List<DeviceApply>> getPurchaseList(@RequestHeader(value = "Authentication-Token") String token,
+                                                         @RequestParam Integer page, @RequestParam Integer pageSize,
+                                                         @RequestParam(required = false) String name,
+                                                         @RequestParam(required = false) DeviceApplyStatusEnum status) {
+        String userSerialize = (String) redisTemplate.opsForValue().get(token);
+        User user = GsonUtils.fromJson(userSerialize, User.class);
+        if (user == null) {
+            return CommonResult.expire();
+        }
+
+        DeviceApply deviceApply = new DeviceApply();
+        Device device = new Device();
+        device.setName(name);
+        deviceApply.setDevice(device);
+        deviceApply.setStatus(status);
+
+        // 超级管理员可以查看全部
+        if (UserRoleEnum.SUPER_ADMIN == user.getRole()) {
+            List<DeviceApply> deviceRepairs = deviceApplyService.getDeviceRepairs(page, pageSize, deviceApply);
+            // 根据Device.id查询status为'REPAIRING'的数据
+            List<DeviceApply> filteredDeviceRepairs = deviceRepairs.stream()
+                    .filter(da -> isDevicePurchasing(da.getDevice().getId()))
+                    .collect(Collectors.toList());
+            return CommonResult.success(filteredDeviceRepairs);
+        } else {
+            List<DeviceApply> userDeviceApplies = deviceApplyMapper.findDeviceApply(user);
+            // 根据Device.id查询status为'REPAIRING'的数据
+            List<DeviceApply> filteredUserDeviceApplies = userDeviceApplies.stream()
+                    .filter(da -> isDevicePurchasing(da.getDevice().getId()))
+                    .collect(Collectors.toList());
+            return CommonResult.success(filteredUserDeviceApplies);
+        }
+    }
+
+    private boolean isDevicePurchasing(Integer deviceId) {
+        // 根据Device.id查询device表中的status是否为'REPAIRING'
+        // 假设你有一个名为deviceService的设备服务类来查询设备信息
+        Device device = deviceService.getDeviceById(deviceId);
+        return device != null && DeviceStatusEnum.DAMAGED.equals(device.getStatus());
+    }
+
+
 
     @LoginRequired
     @ApiOperation(value = "统计设备申请表数量")
@@ -210,6 +351,9 @@ public class ApplyController {
 
         private DeviceApplyStatusEnum status;
 
+        private BigDecimal cost;
+
+        private String plant;
         private Device device;
 
         private User user;
