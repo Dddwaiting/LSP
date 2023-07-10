@@ -85,6 +85,77 @@ public class ApplyController {
         return CommonResult.failed("失效");
     }
 
+    @LoginRequired
+    @ApiOperation(value = "提交维修申请")
+    @PostMapping("repair")
+    public CommonResult<DeviceApply> repairDevice(@RequestHeader(value = "Authentication-Token") String token,
+                                                 @RequestBody @Valid DeviceApplyVO deviceApplyVO) {
+        String userSerialize = (String)redisTemplate.opsForValue().get(token);
+        User user = GsonUtils.fromJson(userSerialize, User.class);
+        if(user == null) {
+            return CommonResult.expire();
+        }
+
+        synchronized (this) {
+            //判断设备是否被借了,同时要防止多人竞争
+            Integer deviceId = deviceApplyVO.getDevice().getDeviceId();
+            Device device = deviceService.getDeviceById(deviceId);
+
+            if(device != null) {
+                DeviceApply deviceApply = new DeviceApply();
+                deviceApply.setDevice(deviceApplyVO.getDevice());
+                deviceApply.setUser(user);
+                deviceApply.setStatus(DeviceApplyStatusEnum.APPLIED);
+                deviceApply.setBorrowReason(deviceApplyVO.borrowReason);
+                deviceApply.setPromiseTimestamp(deviceApplyVO.promiseTimestamp);
+                deviceApply.setCost(deviceApplyVO.cost);
+                deviceApply.setPlant(deviceApplyVO.plant);
+
+                return CommonResult.success(deviceApplyService.saveDeviceRepair(deviceApply, device));
+            }
+
+
+
+        }
+        return CommonResult.failed("失效");
+    }
+
+    @LoginRequired
+    @ApiOperation(value = "提交购买设备申请")
+    @PostMapping("purchase")
+    public CommonResult<DeviceApply> purchaseDevice(@RequestHeader(value = "Authentication-Token") String token,
+                                                 @RequestBody @Valid DeviceApplyVO deviceApplyVO) {
+        String userSerialize = (String)redisTemplate.opsForValue().get(token);
+        User user = GsonUtils.fromJson(userSerialize, User.class);
+        if(user == null) {
+            return CommonResult.expire();
+        }
+
+        synchronized (this) {
+            //判断设备是否被借了,同时要防止多人竞争
+            Integer deviceId = deviceApplyVO.getDevice().getDeviceId();
+            Device device = deviceService.getDeviceById(deviceId);
+
+            if(device != null ) {
+                DeviceApply deviceApply = new DeviceApply();
+                deviceApply.setDevice(deviceApplyVO.getDevice());
+                deviceApply.setUser(user);
+                deviceApply.setStatus(DeviceApplyStatusEnum.APPLIED);
+                deviceApply.setBorrowReason(deviceApplyVO.borrowReason);
+                deviceApply.setPromiseTimestamp(deviceApplyVO.promiseTimestamp);
+                deviceApply.setCost(deviceApplyVO.cost);
+                deviceApply.setPlant(deviceApplyVO.plant);
+
+                return CommonResult.success(deviceApplyService.saveDevicePurchase(deviceApply, device));
+            }
+
+
+
+        }
+        return CommonResult.failed("失效");
+    }
+
+
     /**
      * 这里查询由两部分集成, 1) 用户申请的设备 2) 若为管理员,则包含待审查的申请列表
      * @param token 用户标识
@@ -183,7 +254,7 @@ public class ApplyController {
     @LoginRequired
     @ApiOperation(value = "查询维修设备申请表")
     @GetMapping("repair")
-    public CommonResult<List<DeviceApply>> getRepairList(@RequestHeader(value = "Authentication-Token") String token,
+    public CommonResult<List<DeviceApply>>              getRepairList(@RequestHeader(value = "Authentication-Token") String token,
                                                          @RequestParam Integer page, @RequestParam Integer pageSize,
                                                          @RequestParam(required = false) String name,
                                                          @RequestParam(required = false) DeviceApplyStatusEnum status) {
@@ -342,6 +413,68 @@ public class ApplyController {
             return CommonResult.forbidden(null);
         }
     }
+
+
+    @LoginRequired
+    @ApiOperation(value = "更新维修信息", notes = "管理员及所有者均可操作,但所处状态不同")
+    @PutMapping("repair")
+    public CommonResult<DeviceApply> updateRepair(@RequestHeader(value = "Authentication-Token") String token,
+                                                 @RequestParam Integer deviceApplyId,
+                                                 @RequestParam DeviceApplyStatusEnum status) {
+        String userSerialize = (String)redisTemplate.opsForValue().get(token);
+        User user = GsonUtils.fromJson(userSerialize, User.class);
+        if(user == null) {
+            return CommonResult.expire();
+        }
+
+        DeviceApply deviceApply = deviceApplyService.getDeviceApplyById(deviceApplyId);
+
+        if(UserRoleEnum.SUPER_ADMIN == user.getRole()) {
+            return CommonResult.success(deviceApplyService.updateRepair(deviceApply, status, UserRoleEnum.SUPER_ADMIN));
+        } else {
+            //判断该申请ID是否属于用户,或者由该用户审查
+            if(Objects.equals(deviceApply.getUser().getUserId(), user.getUserId())) {
+                return CommonResult.success(deviceApplyService.updateRepair(deviceApply, status, UserRoleEnum.NORMAL));
+            }
+            Laboratory laboratory = laboratoryService.getLaboratory(deviceApply.getDevice().getLaboratory());
+            if(laboratory != null && Objects.equals(laboratory.getUser().getUserId(), user.getUserId())) {
+                return CommonResult.success(deviceApplyService.updateRepair(deviceApply, status, UserRoleEnum.ADMIN));
+            }
+            return CommonResult.forbidden(null);
+        }
+    }
+
+    @LoginRequired
+    @ApiOperation(value = "更新购买信息", notes = "管理员及所有者均可操作,但所处状态不同")
+    @PutMapping("purchase")
+    public CommonResult<DeviceApply> updatePurchase(@RequestHeader(value = "Authentication-Token") String token,
+                                                  @RequestParam Integer deviceApplyId,
+                                                  @RequestParam DeviceApplyStatusEnum status) {
+        String userSerialize = (String)redisTemplate.opsForValue().get(token);
+        User user = GsonUtils.fromJson(userSerialize, User.class);
+        if(user == null) {
+            return CommonResult.expire();
+        }
+
+        DeviceApply deviceApply = deviceApplyService.getDeviceApplyById(deviceApplyId);
+
+        if(UserRoleEnum.SUPER_ADMIN == user.getRole()) {
+            return CommonResult.success(deviceApplyService.updatePurchase(deviceApply, status, UserRoleEnum.SUPER_ADMIN));
+        } else {
+            //判断该申请ID是否属于用户,或者由该用户审查
+            if(Objects.equals(deviceApply.getUser().getUserId(), user.getUserId())) {
+                return CommonResult.success(deviceApplyService.updatePurchase(deviceApply, status, UserRoleEnum.NORMAL));
+            }
+            Laboratory laboratory = laboratoryService.getLaboratory(deviceApply.getDevice().getLaboratory());
+            if(laboratory != null && Objects.equals(laboratory.getUser().getUserId(), user.getUserId())) {
+                return CommonResult.success(deviceApplyService.updatePurchase(deviceApply, status, UserRoleEnum.ADMIN));
+            }
+            return CommonResult.forbidden(null);
+        }
+    }
+
+
+
 
     @Data
     static class DeviceApplyVO {

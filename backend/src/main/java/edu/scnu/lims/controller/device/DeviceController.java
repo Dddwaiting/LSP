@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -53,8 +54,12 @@ public class DeviceController {
             device.setStatus(DeviceStatusEnum.AVAILABLE);
             device.setImageUrl(deviceVO.getImageUrl());
             device.setLaboratory(deviceVO.getLaboratory());
+
             device.setPropertyList(deviceVO.getPropertyList());
             device.setAppendixList(deviceVO.getAppendixList());
+            device.setPrice(deviceVO.getPrice());
+            device.setMaker(deviceVO.getMaker());
+
 
             return CommonResult.success(deviceService.saveDevice(device));
         }
@@ -196,6 +201,9 @@ public class DeviceController {
         private String imageUrl;
         private String name;
         private String status;
+        private BigDecimal price;
+
+        private String maker;
         private List<Property> propertyList;
 
         private List<Appendix> appendixList;

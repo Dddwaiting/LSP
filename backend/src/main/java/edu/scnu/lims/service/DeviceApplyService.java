@@ -44,6 +44,34 @@ public class DeviceApplyService {
         return deviceApplyDao.save(deviceApply);
     }
 
+
+    @Transactional(rollbackFor = Exception.class)
+    public DeviceApply saveDeviceRepair(DeviceApply deviceApply, Device device) {
+        device.setStatus(DeviceStatusEnum.REPAIRING);
+        deviceService.updateDevice(device);
+        //第一次创建
+        if(deviceApply.getApplyTimestamp() == null) {
+            deviceApply.setApplyTimestamp(System.currentTimeMillis());
+        }
+        return deviceApplyDao.save(deviceApply);
+    }
+
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public DeviceApply saveDevicePurchase(DeviceApply deviceApply, Device device) {
+        device.setStatus(DeviceStatusEnum.AVAILABLE);
+        deviceService.updateDevice(device);
+        //第一次创建
+        if(deviceApply.getApplyTimestamp() == null) {
+            deviceApply.setApplyTimestamp(System.currentTimeMillis());
+        }
+        return deviceApplyDao.save(deviceApply);
+    }
+
+
+
+
     public DeviceApply getDeviceApplyById(Integer deviceApplyId) {
         return deviceApplyDao.findById(deviceApplyId).orElse(null);
     }
@@ -153,5 +181,145 @@ public class DeviceApplyService {
 
         return deviceApplyDao.save(deviceApply);
     }
+
+
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public DeviceApply updateRepair(DeviceApply deviceApply, DeviceApplyStatusEnum status, UserRoleEnum role) {
+        switch (role) {
+            case SUPER_ADMIN:
+                if(status == DeviceApplyStatusEnum.CANCELED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                } else if(status == DeviceApplyStatusEnum.GRANTED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setGrantTimestamp(System.currentTimeMillis());
+                } else if(status == DeviceApplyStatusEnum.DENIED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                } else if(status == DeviceApplyStatusEnum.RETURNED && deviceApply.getStatus() == DeviceApplyStatusEnum.GRANTED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setReturnTimestamp(System.currentTimeMillis());
+                } else if(status == DeviceApplyStatusEnum.FINISHED && deviceApply.getStatus() == DeviceApplyStatusEnum.RETURNED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setFinishTimestamp(System.currentTimeMillis());
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                }
+                break;
+            case ADMIN:
+                if(status == DeviceApplyStatusEnum.GRANTED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setGrantTimestamp(System.currentTimeMillis());
+                } else if(status == DeviceApplyStatusEnum.DENIED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                } else if(status == DeviceApplyStatusEnum.FINISHED && deviceApply.getStatus() == DeviceApplyStatusEnum.RETURNED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setFinishTimestamp(System.currentTimeMillis());
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                }
+                break;
+            case NORMAL:
+                if(status == DeviceApplyStatusEnum.CANCELED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                } else if(status == DeviceApplyStatusEnum.RETURNED && deviceApply.getStatus() == DeviceApplyStatusEnum.GRANTED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setReturnTimestamp(System.currentTimeMillis());
+                }
+                break;
+            default:
+        }
+
+        return deviceApplyDao.save(deviceApply);
+    }
+
+
+
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public DeviceApply updatePurchase(DeviceApply deviceApply, DeviceApplyStatusEnum status, UserRoleEnum role) {
+        switch (role) {
+            case SUPER_ADMIN:
+                if(status == DeviceApplyStatusEnum.CANCELED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                } else if(status == DeviceApplyStatusEnum.GRANTED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setGrantTimestamp(System.currentTimeMillis());
+                } else if(status == DeviceApplyStatusEnum.DENIED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                } else if(status == DeviceApplyStatusEnum.RETURNED && deviceApply.getStatus() == DeviceApplyStatusEnum.GRANTED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setReturnTimestamp(System.currentTimeMillis());
+                } else if(status == DeviceApplyStatusEnum.FINISHED && deviceApply.getStatus() == DeviceApplyStatusEnum.RETURNED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setFinishTimestamp(System.currentTimeMillis());
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                }
+                break;
+            case ADMIN:
+                if(status == DeviceApplyStatusEnum.GRANTED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setGrantTimestamp(System.currentTimeMillis());
+                } else if(status == DeviceApplyStatusEnum.DENIED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                } else if(status == DeviceApplyStatusEnum.FINISHED && deviceApply.getStatus() == DeviceApplyStatusEnum.RETURNED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setFinishTimestamp(System.currentTimeMillis());
+                    //恢复设备状态
+                    Device device = deviceApply.getDevice();
+                    device.setStatus(DeviceStatusEnum.AVAILABLE);
+                    deviceService.saveDevice(device);
+                }
+                break;
+            case NORMAL:
+                if(status == DeviceApplyStatusEnum.CANCELED && deviceApply.getStatus() == DeviceApplyStatusEnum.APPLIED) {
+                    deviceApply.setStatus(status);
+                } else if(status == DeviceApplyStatusEnum.RETURNED && deviceApply.getStatus() == DeviceApplyStatusEnum.GRANTED) {
+                    deviceApply.setStatus(status);
+                    deviceApply.setReturnTimestamp(System.currentTimeMillis());
+                }
+                break;
+            default:
+        }
+
+        return deviceApplyDao.save(deviceApply);
+    }
+
+
+
+
+
 
 }
