@@ -157,6 +157,9 @@ public class DeviceController {
         }
         device.setPropertyList(deviceVO.getPropertyList());
         device.setAppendixList(deviceVO.getAppendixList());
+        device.setPrice(deviceVO.getPrice());
+        device.setMaker(deviceVO.getMaker());
+
 
         return CommonResult.success(deviceService.updateDevice(device));
     }
