@@ -20,7 +20,7 @@ spring:
   mail:
     host: smtp.qq.com
     username: iedingyi@foxmail.com
-    password: jrwikibnhvuieadb
+    password: 
   servlet:
     multipart:
       max-file-size: 10MB
